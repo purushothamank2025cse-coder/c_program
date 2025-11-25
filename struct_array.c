@@ -7,8 +7,10 @@ struct student
 
 }s[2];
 int main()
-{
-   for(int i=0;i<2;i++)
+{ int size;
+    printf("no of inputs: ");
+    scanf("%d",size);
+   for(int i=0;i<size;i++)
    {printf("enter id,name,address");
     scanf("%d",&s[i].id);
     scanf("%s",s[i].name);
