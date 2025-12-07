@@ -1,0 +1,379 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Laptop Comparator</title>
+  <style>
+    :root{
+      --bg:#0f1724; --card:#0b1220; --muted:#9aa7b2; --accent:#7c3aed; --good:#16a34a; --bad:#ef4444; --tie:#94a3b8;
+      --glass: rgba(255,255,255,0.03);
+      font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; padding:28px; background:linear-gradient(180deg,#071027 0%, #071933 100%); color:#e6eef6;
+      -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    }
+
+    h1{font-size:20px; margin:0 0 18px 0}
+    .container{max-width:1100px; margin:0 auto}
+
+    .grid{
+      display:grid; grid-template-columns: 1fr 1fr; gap:18px; margin-bottom:18px;
+    }
+    .card{
+      background:var(--card); border-radius:12px; padding:18px; box-shadow:0 6px 18px rgba(2,6,23,0.6);
+      border:1px solid rgba(255,255,255,0.03);
+    }
+
+    label{display:block; font-size:12px; color:var(--muted); margin-bottom:6px}
+    input[type=text], input[type=number], select, textarea{
+      width:100%; padding:10px 12px; border-radius:8px; border:1px solid rgba(255,255,255,0.05);
+      background:var(--glass); color:inherit; outline:none; font-size:14px; margin-bottom:12px;
+    }
+    .inline{display:flex; gap:12px}
+    .inline > *{flex:1}
+
+    .compare-row{display:flex; gap:12px; align-items:center}
+    .btn{display:inline-block; padding:10px 14px; border-radius:10px; cursor:pointer; background:var(--accent); color:white; border:0; font-weight:600}
+
+    .result-area{margin-top:18px}
+    .specs{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+    .spec{
+      background:linear-gradient(180deg, rgba(255,255,255,0.02), transparent); padding:12px; border-radius:10px; border:1px solid rgba(255,255,255,0.02);
+    }
+    .spec h3{margin:0 0 8px 0; font-size:13px}
+    .spec .value{font-size:16px; font-weight:700}
+
+    .bars{display:grid; gap:10px}
+    .bar{
+      height:18px; background:rgba(255,255,255,0.06); border-radius:999px; overflow:hidden; position:relative;
+    }
+    .bar > span{position:absolute; left:0; top:0; bottom:0; display:block; border-radius:999px;}
+    .bar .label{position:relative; z-index:2; padding:0 10px; line-height:18px; font-size:12px}
+
+    .win{box-shadow:0 6px 18px rgba(16,185,129,0.06); border:1px solid rgba(16,185,129,0.12)}
+    .lose{opacity:0.7}
+    .tie{opacity:0.95}
+
+    .compare-table{display:grid; grid-template-columns: 1fr 1fr; gap:12px}
+
+    footer{margin-top:22px; color:var(--muted); font-size:13px}
+
+    /* responsive */
+    @media (max-width:880px){
+      .grid{grid-template-columns:1fr}
+      .compare-table{grid-template-columns:1fr}
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Laptop Comparator — quick comparison for two laptops</h1>
+    <div class="grid">
+      <div class="card" id="laptopA">
+        <h2 style="margin:0 0 12px 0">Laptop A</h2>
+        <label>Model name</label>
+        <input id="a_name" type="text" placeholder="e.g. Acer Swift 3" value="Laptop A">
+
+        <div class="inline">
+          <div>
+            <label>RAM (GB)</label>
+            <input id="a_ram" type="number" min="0" value="16">
+          </div>
+          <div>
+            <label>Storage (GB)</label>
+            <input id="a_storage" type="number" min="0" value="512">
+          </div>
+        </div>
+
+        <div class="inline">
+          <div>
+            <label>ROM (GB) — optional (duplicate of storage)</label>
+            <input id="a_rom" type="number" min="0" value="512">
+          </div>
+          <div>
+            <label>Battery capacity (mAh or Wh)</label>
+            <input id="a_battery" type="text" placeholder="e.g. 56 Wh / 5000 mAh" value="56">
+          </div>
+        </div>
+
+        <label>Processor performance score (1-100) — higher is better</label>
+        <input id="a_cpu_score" type="number" min="0" max="100" value="70">
+
+        <label>Graphics performance score (1-100)</label>
+        <input id="a_gpu_score" type="number" min="0" max="100" value="60">
+
+        <label>Main features (comma separated)</label>
+        <textarea id="a_features" rows="3">Lightweight, Good battery</textarea>
+      </div>
+
+      <div class="card" id="laptopB">
+        <h2 style="margin:0 0 12px 0">Laptop B</h2>
+        <label>Model name</label>
+        <input id="b_name" type="text" placeholder="e.g. Dell XPS 13" value="Laptop B">
+
+        <div class="inline">
+          <div>
+            <label>RAM (GB)</label>
+            <input id="b_ram" type="number" min="0" value="8">
+          </div>
+          <div>
+            <label>Storage (GB)</label>
+            <input id="b_storage" type="number" min="0" value="256">
+          </div>
+        </div>
+
+        <div class="inline">
+          <div>
+            <label>ROM (GB) — optional</label>
+            <input id="b_rom" type="number" min="0" value="256">
+          </div>
+          <div>
+            <label>Battery capacity (mAh or Wh)</label>
+            <input id="b_battery" type="text" placeholder="e.g. 52 Wh / 4800 mAh" value="52">
+          </div>
+        </div>
+
+        <label>Processor performance score (1-100)</label>
+        <input id="b_cpu_score" type="number" min="0" max="100" value="60">
+
+        <label>Graphics performance score (1-100)</label>
+        <input id="b_gpu_score" type="number" min="0" max="100" value="50">
+
+        <label>Main features (comma separated)</label>
+        <textarea id="b_features" rows="3">Premium build, Compact</textarea>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="compare-row">
+        <div style="flex:1">
+          <label>Comparison name (optional)</label>
+          <input id="cmp_name" type="text" placeholder="Quick compare">
+        </div>
+        <div style="display:flex; gap:8px">
+          <button id="compareBtn" class="btn">Compare</button>
+          <button id="resetBtn" class="btn" style="background:transparent; border:1px solid rgba(255,255,255,0.06)">Reset</button>
+        </div>
+      </div>
+
+      <div class="result-area" id="resultArea" style="display:none">
+        <h2 style="margin-top:14px">Result</h2>
+        <div class="compare-table">
+          <div class="spec">
+            <h3 id="r_a_title">Laptop A</h3>
+            <div class="specs">
+              <div>
+                <div style="font-size:12px;color:var(--muted)">RAM</div>
+                <div class="value" id="r_a_ram">-</div>
+              </div>
+              <div>
+                <div style="font-size:12px;color:var(--muted)">Storage</div>
+                <div class="value" id="r_a_storage">-</div>
+              </div>
+
+              <div>
+                <div style="font-size:12px;color:var(--muted)">Processor score</div>
+                <div class="value" id="r_a_cpu">-</div>
+              </div>
+              <div>
+                <div style="font-size:12px;color:var(--muted)">Graphics score</div>
+                <div class="value" id="r_a_gpu">-</div>
+              </div>
+
+              <div style="grid-column:1 / -1">
+                <div style="font-size:12px;color:var(--muted)">Battery</div>
+                <div class="value" id="r_a_batt">-</div>
+              </div>
+
+              <div style="grid-column:1 / -1">
+                <div style="font-size:12px;color:var(--muted)">Main features</div>
+                <div id="r_a_features">-</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="spec">
+            <h3 id="r_b_title">Laptop B</h3>
+            <div class="specs">
+              <div>
+                <div style="font-size:12px;color:var(--muted)">RAM</div>
+                <div class="value" id="r_b_ram">-</div>
+              </div>
+              <div>
+                <div style="font-size:12px;color:var(--muted)">Storage</div>
+                <div class="value" id="r_b_storage">-</div>
+              </div>
+
+              <div>
+                <div style="font-size:12px;color:var(--muted)">Processor score</div>
+                <div class="value" id="r_b_cpu">-</div>
+              </div>
+              <div>
+                <div style="font-size:12px;color:var(--muted)">Graphics score</div>
+                <div class="value" id="r_b_gpu">-</div>
+              </div>
+
+              <div style="grid-column:1 / -1">
+                <div style="font-size:12px;color:var(--muted)">Battery</div>
+                <div class="value" id="r_b_batt">-</div>
+              </div>
+
+              <div style="grid-column:1 / -1">
+                <div style="font-size:12px;color:var(--muted)">Main features</div>
+                <div id="r_b_features">-</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-top:14px">
+          <h3 style="margin:0 0 10px 0">Visual comparison (higher is better)</h3>
+          <div class="bars">
+            <div>
+              <div style="font-size:13px;margin-bottom:6px">Processor</div>
+              <div class="bar"><span id="bar_cpu_a"></span><div class="label" style="position:relative; padding-left:10px">A</div></div>
+              <div class="bar" style="margin-top:6px"><span id="bar_cpu_b"></span><div class="label" style="position:relative; padding-left:10px">B</div></div>
+            </div>
+
+            <div>
+              <div style="font-size:13px;margin-bottom:6px">Graphics</div>
+              <div class="bar"><span id="bar_gpu_a"></span><div class="label" style="position:relative; padding-left:10px">A</div></div>
+              <div class="bar" style="margin-top:6px"><span id="bar_gpu_b"></span><div class="label" style="position:relative; padding-left:10px">B</div></div>
+            </div>
+
+            <div>
+              <div style="font-size:13px;margin-bottom:6px">RAM (GB)</div>
+              <div class="bar"><span id="bar_ram_a"></span><div class="label" style="position:relative; padding-left:10px">A</div></div>
+              <div class="bar" style="margin-top:6px"><span id="bar_ram_b"></span><div class="label" style="position:relative; padding-left:10px">B</div></div>
+            </div>
+
+            <div>
+              <div style="font-size:13px;margin-bottom:6px">Storage (GB)</div>
+              <div class="bar"><span id="bar_stor_a"></span><div class="label" style="position:relative; padding-left:10px">A</div></div>
+              <div class="bar" style="margin-top:6px"><span id="bar_stor_b"></span><div class="label" style="position:relative; padding-left:10px">B</div></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <footer>Tip: Enter numeric scores (1–100) for processor and graphics to let the comparator rank them. You can copy this page and save as <code>compare.html</code>.</footer>
+  </div>
+
+  <script>
+    function qs(id){return document.getElementById(id)}
+
+    function resetResult(){qs('resultArea').style.display='none';
+      // clear winner/loser classes if present
+      ['r_a_title','r_b_title','r_a_ram','r_b_ram','r_a_storage','r_b_storage','r_a_cpu','r_b_cpu','r_a_gpu','r_b_gpu','r_a_batt','r_b_batt','r_a_features','r_b_features']
+      .forEach(id=>{const el=qs(id); if(el) el.classList.remove('win','lose','tie')});
+    }
+
+    function setBar(id, pct, color){
+      const el = qs(id);
+      if(!el) return;
+      el.style.width = Math.max(0, Math.min(100, pct)) + '%';
+      el.style.background = color;
+    }
+
+    function compare(){
+      const a = {
+        name: qs('a_name').value || 'Laptop A',
+        ram: Number(qs('a_ram').value)||0,
+        storage: Number(qs('a_storage').value)||0,
+        rom: Number(qs('a_rom').value)||0,
+        batt: qs('a_battery').value||'-',
+        cpu: Number(qs('a_cpu_score').value)||0,
+        gpu: Number(qs('a_gpu_score').value)||0,
+        features: qs('a_features').value||'-'
+      };
+      const b = {
+        name: qs('b_name').value || 'Laptop B',
+        ram: Number(qs('b_ram').value)||0,
+        storage: Number(qs('b_storage').value)||0,
+        rom: Number(qs('b_rom').value)||0,
+        batt: qs('b_battery').value||'-',
+        cpu: Number(qs('b_cpu_score').value)||0,
+        gpu: Number(qs('b_gpu_score').value)||0,
+        features: qs('b_features').value||'-'
+      };
+
+      // show area
+      qs('resultArea').style.display='block';
+
+      // fill values
+      qs('r_a_title').textContent = a.name;
+      qs('r_b_title').textContent = b.name;
+
+      qs('r_a_ram').textContent = a.ram + ' GB';
+      qs('r_b_ram').textContent = b.ram + ' GB';
+
+      qs('r_a_storage').textContent = a.storage + ' GB';
+      qs('r_b_storage').textContent = b.storage + ' GB';
+
+      qs('r_a_cpu').textContent = a.cpu;
+      qs('r_b_cpu').textContent = b.cpu;
+
+      qs('r_a_gpu').textContent = a.gpu;
+      qs('r_b_gpu').textContent = b.gpu;
+
+      qs('r_a_batt').textContent = a.batt;
+      qs('r_b_batt').textContent = b.batt;
+
+      qs('r_a_features').textContent = a.features;
+      qs('r_b_features').textContent = b.features;
+
+      // determine winners for numeric specs
+      function mark(idA, idB, valA, valB){
+        const elA = qs(idA), elB = qs(idB);
+        elA.classList.remove('win','lose','tie'); elB.classList.remove('win','lose','tie');
+        if(valA > valB){ elA.classList.add('win'); elB.classList.add('lose'); }
+        else if(valA < valB){ elB.classList.add('win'); elA.classList.add('lose'); }
+        else{ elA.classList.add('tie'); elB.classList.add('tie'); }
+      }
+
+      mark('r_a_ram','r_b_ram', a.ram, b.ram);
+      mark('r_a_storage','r_b_storage', a.storage, b.storage);
+      mark('r_a_cpu','r_b_cpu', a.cpu, b.cpu);
+      mark('r_a_gpu','r_b_gpu', a.gpu, b.gpu);
+
+      // bars (normalize values to 0-100)
+      // find maxima to scale bars (avoid division by zero)
+      const maxCpu = Math.max(a.cpu, b.cpu, 1);
+      const maxGpu = Math.max(a.gpu, b.gpu, 1);
+      const maxRam = Math.max(a.ram, b.ram, 1);
+      const maxStor = Math.max(a.storage, b.storage, 1);
+
+      setBar('bar_cpu_a', Math.round((a.cpu/maxCpu)*100), 'linear-gradient(90deg,var(--good), rgba(16,185,129,0.6))');
+      setBar('bar_cpu_b', Math.round((b.cpu/maxCpu)*100), 'linear-gradient(90deg,var(--accent), rgba(124,58,237,0.6))');
+
+      setBar('bar_gpu_a', Math.round((a.gpu/maxGpu)*100), 'linear-gradient(90deg,var(--good), rgba(16,185,129,0.6))');
+      setBar('bar_gpu_b', Math.round((b.gpu/maxGpu)*100), 'linear-gradient(90deg,var(--accent), rgba(124,58,237,0.6))');
+
+      setBar('bar_ram_a', Math.round((a.ram/maxRam)*100), 'linear-gradient(90deg,var(--good), rgba(16,185,129,0.6))');
+      setBar('bar_ram_b', Math.round((b.ram/maxRam)*100), 'linear-gradient(90deg,var(--accent), rgba(124,58,237,0.6))');
+
+      setBar('bar_stor_a', Math.round((a.storage/maxStor)*100), 'linear-gradient(90deg,var(--good), rgba(16,185,129,0.6))');
+      setBar('bar_stor_b', Math.round((b.storage/maxStor)*100), 'linear-gradient(90deg,var(--accent), rgba(124,58,237,0.6))');
+
+    }
+
+    qs('compareBtn').addEventListener('click', compare);
+    qs('resetBtn').addEventListener('click', function(){
+      // reset to initial values
+      document.querySelectorAll('input[type=number]').forEach(i=>i.value='');
+      document.querySelectorAll('input[type=text]').forEach(i=>i.value='');
+      document.querySelectorAll('textarea').forEach(t=>t.value='');
+      resetResult();
+    });
+
+    // initialize with sample comparison
+    window.addEventListener('load', function(){ compare(); });
+  </script>
+</body>
+</html>
